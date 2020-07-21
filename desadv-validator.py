@@ -40,8 +40,8 @@ def output(filenames: Iterable, line_numbers: bool = False) -> int:
     return ret_code
 
 # ISA has fixed width elements. These should all be equal. 103 is official sep.element position
-isa_element_sep = [3, 6, 17, 20, 31, 34, 50, 53, 69, 76, 81, 83, 89, 99, 101, 103]
-isa_example = "ISA*00*          *00*          *ZZ*SOMEBODYELSE   *ZZ*MAYBEYOU       *171231*2359*U*00401*000012345*0*P*:~"  # noqa
+# isa_element_sep = [3, 6, 17, 20, 31, 34, 50, 53, 69, 76, 81, 83, 89, 99, 101, 103]
+# isa_example = "ISA*00*          *00*          *ZZ*SOMEBODYELSE   *ZZ*MAYBEYOU       *171231*2359*U*00401*000012345*0*P*:~"  # noqa
 
 
 def readdocument(edi: Union[str, BinaryIO], filename: str = 'stream', encoding: str ='latin-1') -> Iterator[str]:
@@ -82,21 +82,23 @@ def detect(text: str) -> Dict[str, str]:
 
     sep = {}
     # EDI X12: begins with ISA (106 chars) followed by a GS segment
-    if text.startswith('ISA'):
-        if 'GS' in text[106:110] and len(set([text[pos] for pos in isa_element_sep])) == 1:
-            sep = {'element': text[103],
-                   'subelement': text[104],
-                   'segment': text[105],
-                   'suffix': text[106:text.find('GS')]}
-            if text[82] != 'U':  # X12 before repetition has 'U' here.
-                sep['repetition'] = text[82]
-        else:
-            print("Invalid X12 ISA Header (expected 16 fixed width fields, 106 characters wide)",
-                  "Expected: %s" % isa_example,
-                  "Received: %s" % (text[:106]),
-                  file=sys.stderr, sep="\n")
+    # if text.startswith('ISA'):
+    #     if 'GS' in text[106:110] and len(set([text[pos] for pos in isa_element_sep])) == 1:
+    #         sep = {'element': text[103],
+    #                'subelement': text[104],
+    #                'segment': text[105],
+    #                'suffix': text[106:text.find('GS')]}
+    #         if text[82] != 'U':  # X12 before repetition has 'U' here.
+    #             sep['repetition'] = text[82]
+    #     else:
+    #         print("Invalid X12 ISA Header (expected 16 fixed width fields, 106 characters wide)",
+    #               "Expected: %s" % isa_example,
+    #               "Received: %s" % (text[:106]),
+    #               file=sys.stderr, sep="\n")
+
     # Edifact UNA: begins with UNA followed by UNB or UNG
-    elif text.startswith('UNA') and 'UN' in text[3:13]:
+    # elif 
+    if text.startswith('UNA') and 'UN' in text[3:13]:
         # ex: """UNA:+.? '\r\nUN..."""
         sep = {'subelement': text[3],
                'element': text[4],
@@ -124,17 +126,39 @@ def detect(text: str) -> Dict[str, str]:
         sep['hard_wrap'] = True
     return sep
 
-filename = 'C:\\Users\\jharms\\OneDrive - primeXchange\\8. Github\\desadv-validator\\desadv_linebreak.txt'
 
+filename = 'C:\\Users\\jharms\\OneDrive - primeXchange\\8. Github\\desadv-validator\\desadv_linebreak.txt'
+filename = 'G:\\GitHub\\desadv-validator\\tests\\DESADV_line_break.txt'
+
+data = {}
+data['RECEIVER_GLN'] = ''
+data['REFERENZ'] = ''
+data['TESTKENNZEICHEN'] = False
 
 my_file = open(filename, 'rb')
 file_content = OrderedDict()
 for line_no, line in enumerate(readdocument(my_file)):
-    # if line.startswith('UNA'):
-    #     print(Found UNA at
-
     file_content[line_no] = line
     print(str(line_no) + '\t' + line)
+
+    if line.startswith('UNB'):
+        data['RECEIVER_GLN'] = line.split(':')[2].split('+')[1]
+        if data['RECEIVER_GLN'] != '123':
+            print('falsch, line {}'.format(line_no + 1))
+        data['REFERENZ'] = line.split(':')[4].split('+')[1]
+        try:
+            data['TESTKENNZEICHEN'] = True if line.split(':')[4].split('+')[6] else False
+        except IndexError:
+            data['TESTKENNZEICHEN'] = False
+        print('Empfänger: {}, REFERENZ: {}, Kennz: {}'.format(data['RECEIVER_GLN'], data['REFERENZ'], data['TESTKENNZEICHEN']))
+        # print('Found UNA at line {}.'.format(line_no))
 print('----')
 print(file_content[0])
 my_file.close()
+
+
+if data['RECEIVER_GLN'] != '123':
+    print('Receiver-GLN falsch')
+
+# def split_desadv(segment: str):
+
