@@ -137,6 +137,7 @@ data['TESTKENNZEICHEN'] = False
 
 my_file = open(filename, 'rb')
 file_content = OrderedDict()
+
 for line_no, line in enumerate(readdocument(my_file)):
     file_content[line_no] = line
     print(str(line_no) + '\t' + line)
