@@ -144,4 +144,4 @@ def CheckDESADV(self, err):
 fehler = DESADVFehler()
 CheckDESADV(collection, fehler)
 
-print(fail_msg + 'falsch "{}"'.format(fehler.UNB_RCV)) if fehler.UNB_RCV else print(success_msg + 'richtig "{}"'.format(rcfehler.UNB_RCVv))
+print(fail_msg + 'falsch "{}"'.format(fehler.UNB_RCV)) if fehler.UNB_RCV else print(success_msg + 'richtig "{}"'.format(fehler.UNB_RCV))
